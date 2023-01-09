@@ -73,10 +73,11 @@ class Buyer(object):
         :buyTime 定时执行
         """
         self.session.fetchItemDetail(skuId)
-        timer = Timer(buyTime)
+        timer = Timer(buyTime) ## 这里会sleep，注意时间设置
         timer.start()
 
         while True:
+            count  = 0
             try:
                 if not self.session.getItemStock(skuId, skuNum, areaId):
                     logger.info('不满足下单条件，{0}s后进行下一次查询'.format(stockInterval))
@@ -90,25 +91,29 @@ class Buyer(object):
                         return
             except Exception as e:
                 logger.error(e)
-            time.sleep(stockInterval)
+            count = count + 1
+            if (count > 5000):
+                logger.info('已经执行5000次仍未成功，退出执行')
+                send_wechat(message='JdBuyerApp', desp='已经执行5000次仍未成功，退出执行', sckey=self.scKey)
+            # time.sleep(stockInterval)
 
 
 if __name__ == '__main__':
 
     # 商品sku
-    skuId = '100015253059'
+    skuId = '6675734'
     # 区域id(可根据工程 area_id 目录查找)
-    areaId = '1_2901_55554_0'
+    areaId = '4_48205_52493'
     # 购买数量
     skuNum = 1
     # 库存查询间隔(秒)
-    stockInterval = 3
+    stockInterval = 0.0001
     # 监听库存后尝试下单次数
     submitRetry = 3
     # 下单尝试间隔(秒)
-    submitInterval = 5
+    submitInterval = 0.0001
     # 程序开始执行时间(晚于当前时间立即执行，适用于定时抢购类)
-    buyTime = '2022-10-10 00:00:00'
+    buyTime = '2023-01-10 11:59:57'
 
     buyer = Buyer()  # 初始化
     buyer.loginByQrCode()
